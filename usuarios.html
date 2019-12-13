@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Usuarios Registrados</title>
+    <!--CSS-->
+    <link rel="stylesheet" href="./css/menu.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        .Material__Iconos:link, .Material__Iconos:visited {
+            color: black;
+            text-align: center;
+            margin-left: 16px;
+        }
+    </style>
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script defer src="./js/validateday.js"></script>
+</head>
+<body>
+    <div class="menu">
+        <div class="menu__opciones">
+            <li class="menu__opcion"><a href="registro_usuario.html">Registrar Usuario</a></li>
+            <li class="menu__opcion"><a href="asignar_dispositivo.html">Asignar Dispositivo</a></li>
+            <li class="menu__opcion"><a href="index.html">Inicio</a></li>
+        </div>
+    </div>
+
+    <form class="form-inline" style="float: right; margin-top: 7px;">
+        <div class="form-group mx-sm-3 mb-2">
+            <input type="text" id="dataSearch" class="form-control" style="margin-right: 5px;" placeholder="Busqueda">
+            <button type="button" onclick="searchUser()" class="btn btn-primary">Buscar</button>
+        </div>
+    </form>
+
+    <table class="table">
+        <thead class="thead-light">
+            <tr>
+                <th scope="col">Cédula</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Cordova</th>
+                <th scope="col">Celular</th>
+                <th scope="col">Fecha de registro</th>
+                <th scope="col">Auditorias</th>
+                <th scope="col">Editar</th>
+                <th scope="col">Borrar</th>
+            </tr>
+        </thead>
+        <tbody id="userList"></tbody>
+    </table>
+
+    <div class="container">
+        <button class="btn btn-primary" onclick="anterior()">Anterior</button>
+        <button class="btn btn-primary" onclick="siguiente()" style="float: right">Siguiente</button>
+    </div>
+
+    <script>
+        var maximo;
+        var pagination = 1;
+
+        function searchUser()
+        {
+            let validate = document.getElementById('dataSearch').value.trim();
+
+            if (validate != "") {
+                dataSearch = validate;
+                userRequest(pagination, dataSearch);
+            }
+        }
+
+        function siguiente()
+        {
+            if (pagination < maximo) {
+                pagina++;
+                userRequest(pagination, dataSearch)
+            }
+        }
+
+        function anterior()
+        {
+            if (pagination > 1) {
+                pagina--;
+                userRequest(pagination, dataSearch)
+            }
+        }
+
+        function eliminar(cedula_usuario, nombre_usuario)
+        {
+            let opcion = confirm(`¿Desea eliminar al usuario ${nombre_usuario}? Cédula: ${cedula_usuario}`);
+
+            if (opcion) {
+                fetch('http://localhost:5000/usuario/eliminar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(cedula_usuario)
+                })
+                .then(res => res.json())
+                .catch(error => console.log(error))
+                .then(respuesta => {
+                    if (!respuesta.error) {
+                        alert(respuesta.mensaje);
+                        location.reload(true);
+                    }
+                });
+            }
+        }
+
+        function userList(users)
+        {
+            document.getElementById('userList').innerHTML = '';
+            maximo = users.maximo;
+            users.usuarios.forEach(usuarios => {
+                let date = validateDay(usuarios[4]);
+                let userList =
+                `
+                    <tr>
+                        <th scopre='row'>${usuarios[0]}</th>
+                        <td>${usuarios[1]}</td>
+                        <td>${usuarios[2]}</td>
+                        <td>${usuarios[3]}</td>
+                        <td>${date}</td>
+                        <td><a href='auditorias.html?usuario=${usuarios[0]}' class='Material__Iconos'><i class='material-icons'>book</i></td>
+                        <td><a href='editar_usuario.html?usuario=${usuarios[0]}' class='Material__Iconos'><i class='material-icons'>create</i></a></td>
+                        <td><a href='#' onclick='eliminar(${usuarios[0]}, "${usuarios[1]}")' class='Material__Iconos'><i class='material-icons'>clear</i></a></td>
+                        </tr>
+                `
+
+                document.getElementById('userList').innerHTML += userList;
+            });
+        }
+
+        const xhttp = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                console.log(this.responseText);
+                userList(JSON.parse(this.responseText));
+            }
+        }
+
+        function userRequest(pagina, dataSearch)
+        {
+            let search = {
+                dataSearch,
+            }
+
+            fetch(`http://localhost:5000/usuarios/${pagina}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(search)
+            })
+            .then(ans => ans.json())
+            .catch(error => console.log('Error: ', error))
+            .then(answer => userList(answer))
+        }
+
+        window.onload = userRequest(pagination, undefined)
+    </script>
+
+</body>
+</html>

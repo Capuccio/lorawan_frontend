@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+</head>
+<body>
+
+        <div class="container">
+            <h3>Registrar Usuario</h3>
+    
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="nombre">Nombre</label>
+                        <input type="text" class="form-control" id="nombre" placeholder="Primer Nombre">
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="apellido">Apellido</label>
+                        <input type="text" class="form-control" id="apellido" placeholder="Primer Apellido">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="cedula">Cédula</label>
+                        <input type="number" class="form-control" id="cedula" placeholder="123456789" disabled>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="celular">Celular</label>
+                        <input type="number" class="form-control" id="celular" placeholder="0971234567">
+                    </div>
+                </div>
+
+            <a href="usuarios.html" class="btn btn-danger">Cancelar</a>
+            <button type="button" onclick="actualizar_usuario()" class="btn btn-primary" style="float: right;">Actualizar</button>
+        </div>
+
+    <script>
+        let url = new URL(location.href);
+        let id_usuario = url.searchParams.get('usuario');
+        const xhttp = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+
+        function actualizar_usuario()
+        {
+            let datos = {
+                nombre: document.getElementById('nombre').value,
+                apellido: document.getElementById('apellido').value,
+                cedula: document.getElementById('cedula').value,
+                celular: document.getElementById('celular').value,
+            }
+
+            fetch('http://localhost:5000/usuario/actualizar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(datos)
+            })
+            .then(res => res.json())
+            .catch(error => console.log('Error: ', error))
+            .then(respuesta => {
+                alert(respuesta.mensaje)
+            })
+        }
+
+        function colocarDatos(usuario)
+        {
+            document.getElementById('nombre').value = usuario[1];
+            document.getElementById('apellido').value = usuario[2];
+            document.getElementById('cedula').value = usuario[0];
+            document.getElementById('celular').value = usuario[3];
+        }
+
+        xhttp.onreadystatechange = function()
+        {
+            if (this.readyState == 4 && this.status == 200) {
+                let respuesta = JSON.parse(this.responseText);
+                colocarDatos(respuesta.usuario);
+            }
+        }
+
+        xhttp.open('GET', `http://localhost:5000/usuario/${id_usuario}`, true);
+        xhttp.send();
+    </script>
+</body>
+</html>

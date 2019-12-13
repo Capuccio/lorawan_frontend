@@ -1,0 +1,30 @@
+.menu {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+}
+
+.menu__opciones {
+    list-style-type: none;
+    text-align: center;
+    padding: 2%;
+    background-color: rgb(89, 86, 240);
+}
+
+.menu__opcion {
+    float: left;
+    list-style-type: none;
+    padding-left: 17%;
+    padding: 1px solid red;
+}
+
+.menu__opcion > a:link, a:visited {
+    text-decoration: none;
+    color: white;
+    font-size: 0.2in;
+}
+
+.menu__opcion > a:hover {
+    color: white;
+}

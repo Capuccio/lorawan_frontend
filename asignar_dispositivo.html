@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Asignar Dispositivo</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="./css/menu.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="menu">
+        <div class="menu__opciones">
+            <li class="menu__opcion"><a href="registro_usuario.html">Registrar Usuario</a></li>
+            <li class="menu__opcion"><a href="index.html">Inicio</a></li>
+            <li class="menu__opcion"><a href="usuarios.html">Usuarios</a></li>
+        </div>
+    </div>
+
+    <div class="container">
+        <h3>Asignar Dispositivo</h3>
+
+        <div class="form-row">
+            <div class="form-group col-md-6">
+                <label for="cedula">Cédula del Usuario</label>
+                <input type="number" class="form-control" id="cedula" placeholder="123456789">
+            </div>
+            <div class="form-group col-md-6">
+                <label for="dispositivo">ID del Dispositivo</label>
+                <input type="number" class="form-control" id="dispositivo" placeholder="111">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="asignar_dispositivo()">Asignar</button>
+        </div>
+    </div>
+
+    <script>
+        var asignar = {}
+        function asignar_dispositivo() {
+            let dia = new Date();
+            let mes = dia.getMonth() + 1;
+            let mesTexto = mes.toString();
+            if (mes.length != 2) mes = 0 + mes;
+
+            let fecha = `${dia.getFullYear()}/${mes}/${dia.getDate()}`;
+
+            asignar.cedula = document.getElementById('cedula').value;
+            asignar.dispositivo = document.getElementById('dispositivo').value;
+            asignar.fecha = fecha;
+
+            navigator.geolocation.getCurrentPosition(tomarPosicion);
+        }
+
+        function tomarPosicion(posicion) {
+            asignar.latitud = posicion.coords.latitude;
+            asignar.longitud = posicion.coords.longitude;
+            asignar.altura = posicion.coords.altitude;
+
+            fetch('http://localhost:5000/usuarios/validar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(asignar)
+            })
+            .then(res => res.json())
+            .catch(error => console.log('Error: ',error))
+            .then(respuesta => {
+                if (!respuesta.existe) {
+                    alert('Cédula no registrada')
+                } else {
+                    fetch('http://localhost:5000/dispositivo/asignar', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(asignar)
+                    })
+                    .then(res => res.json())
+                    .catch(error => console.log('Error: ',error))
+                    .then(respuesta => {
+                        if (respuesta.asignado) {
+                            alert(respuesta.mensaje);
+                        } else if (!respuesta.asignado) {
+                            alert(respuesta.mensaje);
+                        }
+                    })
+                }
+            });
+        }
+    </script>
+    
+</body>
+</html>

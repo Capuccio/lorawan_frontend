@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>LoraWAN</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="./css/leaflet.css">
+    <link rel="stylesheet" href="./css/menu.css">
+
+    <!-- JS -->
+    <script src="./js/leaflet.js"></script>
+
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        #mapid {
+            height: 600px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="menu">
+        <div class="menu__opciones">
+            <li class="menu__opcion"><a href="registro_usuario.html">Registrar Usuario</a></li>
+            <li class="menu__opcion"><a href="asignar_dispositivo.html">Asignar Dispositivo</a></li>
+            <li class="menu__opcion"><a href="usuarios.html">Usuarios</a></li>
+        </div>
+    </div>
+
+    <div id="mapid"></div>
+    <div id="error"></div>
+
+    <script>
+        var error = document.getElementById('error');
+        var miMapa;
+        var rutas = new Array();
+        var ubicacion = new Array();
+
+        function unassing_dispositive(id_dispositivo, cedula_usuario) {
+            let desasignar = {
+                id_dispositivo,
+                cedula_usuario
+            }
+
+            fetch('http://localhost:5000/dispositivo/eliminar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(desasignar)
+            })
+            .then(res => res.json())
+            .catch(error => console.log(error))
+            .then(respuesta => {
+                if (!respuesta.error) {
+                    alert(respuesta.mensaje);
+                    location.reload(true);
+                }
+            })
+        }
+
+        function rutaUsuarios(usuarios) {
+            setInterval(function() {
+                fetch('http://localhost:5000/ruta', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(usuarios)
+                })
+                .then(res => res.json())
+                .catch(error => console.log('Error: ', error))
+                .then(respuesta => {
+
+                    for (let i = 0; i < usuarios.length; i++) {
+                        // Se marca la ruta
+                        for (let r = 0; r < respuesta.rutas.length; r++) {
+                            let index = respuesta.rutas[r][0];
+
+                            if (rutas[index]) {
+                                miMapa.removeLayer(rutas[index]);
+                            }
+
+                            let rutaIcono = L.icon({
+                                iconUrl: './img/ruta.png',
+                                iconSize: [20, 22],
+                                iconAnchor: [10, 10]
+                            });
+
+                            let latitud = parseFloat(respuesta.rutas[r][1]);
+                            let longitud = parseFloat(respuesta.rutas[r][2]);
+
+                            rutas[index] = L.marker(L.latLng(latitud, longitud), {icon: rutaIcono});
+
+                            miMapa.addLayer(rutas[index]);
+                        }
+
+                        // Se marca la ubicación
+                        for (let u = 0; u < respuesta.ubicacion.length; u++) {
+
+                            let index = usuarios[i].id_dispositivo;
+
+                            if (ubicacion[index]) {
+                                miMapa.removeLayer(ubicacion[index]);
+                            }
+
+                            if (usuarios[i].id_dispositivo == respuesta.ubicacion[u][4]) {
+                                let latitud = respuesta.ubicacion[u][1];
+                                let longitud = respuesta.ubicacion[u][2];
+
+                                ubicacion[index] = L.marker([latitud, longitud])
+                                                    .bindPopup(`${usuarios[i].nombre_usu} ${usuarios[i].apellido_usu} <br> 
+                                                    ${usuarios[i].celular_usu} <br>
+                                                    ${usuarios[i].id_dispositivo} <br>
+                                                    <button onclick="unassing_dispositive(${usuarios[i].id_dispositivo}, ${usuarios[i].cedula_usu})">Des-Asginar Dispositivo</button> <button onclick="document.location.href='informacion.html?dispositivo=${usuarios[i].id_dispositivo}'">Ver Información</button>`)
+                                                    .openPopup();
+
+                                miMapa.addLayer(ubicacion[index]);
+                            }
+
+                        }
+                    }
+                });
+            }, 7000);
+        }
+
+        function usuariosAsignados() {
+            fetch('http://localhost:5000/usuarios/asignados', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .catch(error => console.log('Error: ',error))
+            .then(respuesta => {
+                if (!respuesta.asignados) {
+                    error.innerHTML = respuesta.usuarios;
+                } else {
+                    rutaUsuarios(respuesta.usuarios);
+                }
+            });
+        }
+
+        function mostrarPosicion(posicion) {
+            const latitud = posicion.coords.latitude;
+            const longitud = posicion.coords.longitude;
+
+            miMapa = L.map('mapid').setView([latitud, longitud], 15);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(miMapa);
+
+            var myIcon = L.icon({
+                iconUrl: './img/posicion_location.png',
+                iconSize: [20, 22],
+                iconAnchor: [10, 10]
+            });
+
+            base = L.marker([latitud, longitud], {icon: myIcon})
+                    .bindPopup('Lugar actual')
+                    .openPopup();
+
+            miMapa.addLayer(base);
+            usuariosAsignados();
+        }
+
+        function localizar() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(mostrarPosicion);
+            } else {
+                error.innerHTML = 'Este navegador no soporta la Geolocalización';
+            }
+        }
+
+        window.onload = localizar();
+    </script>
+</body>
+</html>

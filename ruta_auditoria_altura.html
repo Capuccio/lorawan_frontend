@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Auditoria de las Rutas</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="./css/leaflet.css">
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        #mapid {
+            height: 600px;
+            margin-top: 10px;
+        }
+
+        .Cancelar {
+            margin-top: 20px;
+            margin-bottom: 5px;
+        }
+
+        .Cancelar__Texto__Link:link, .Cancelar__Texto__Link:visited {
+            color: black;
+            text-decoration: none;
+        }
+    </style>
+
+    <!-- JS -->
+    <script src="./js/leaflet.js"></script>
+</head>
+<body>
+    <div class="Cancelar">
+        <a id="backLink"><img src="./img/left-arrow.png" class="Flecha__Cancelar" alt="Flecha Salir"></a>
+    </div>
+
+    <a id="ruta">Ruta</a>
+    <a id="rutaTemp">Ruta con Temperatura</a>
+
+    <div id="mapid"></div>
+
+    <script>
+        const url = new URL(location.href);
+        const auditId = url.searchParams.get('audit_id');
+        const idCardUser = url.searchParams.get('idCardUser');
+
+        document.querySelector('#backLink').setAttribute("href", `auditorias.html?usuario=${idCardUser}`);
+        document.querySelector('#ruta').setAttribute("href", `ruta_auditoria.html?audit_id=${auditId}&idcardUser=${idCardUser}`);
+        document.querySelector('#rutaTemp').setAttribute("href", `ruta_auditoria_temp.html?audit_id=${auditId}&idCardUser=${idCardUser}`);
+
+        fetch(`http://localhost:5000/ruta/auditoria/${auditId}`)
+        .then(ans => ans.json())
+        .catch(error => console.log('Error: ', error))
+        .then(answer => {
+            if (answer.error) {
+                alert(answer.msg)
+            } else {
+                let latitude = answer.msg[0][2];
+                let longitude = answer.msg[0][3];
+
+                const map = L.map('mapid').setView([latitude, longitude], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
+
+                var place = new Array();
+
+                var pathIcon = L.icon({
+                    iconUrl: './img/ruta.png',
+                    iconSize: [20, 22],
+                    iconAnchor: [10, 10]
+                });
+
+                for (let i = 0; i < answer.msg.length; i++) {
+
+                    place[i] = L.marker(L.latLng(answer.msg[i][2], answer.msg[i][3]), {icon: pathIcon})
+                                .bindPopup(`${answer.msg[i][4]}`)
+                                .openPopup();
+
+                    map.addLayer(place[i]);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

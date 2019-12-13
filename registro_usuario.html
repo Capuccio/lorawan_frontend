@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Registrar Usuario</title>
+    <!-- CSS -->
+    <link rel="stylesheet" href="./css/menu.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="menu">
+        <div class="menu__opciones">
+            <li class="menu__opcion"><a href="index.html">Inicio</a></li>
+            <li class="menu__opcion"><a href="asignar_dispositivo.html">Asignar Dispositivo</a></li>
+            <li class="menu__opcion"><a href="usuarios.html">Usuarios</a></li>
+        </div>
+    </div>
+
+    <div class="container">
+            <h3>Registrar Usuario</h3>
+
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="nombre">Nombre</label>
+                    <input type="text" class="form-control" id="nombre" placeholder="Primer Nombre">
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="apellido">Apellido</label>
+                    <input type="text" class="form-control" id="apellido" placeholder="Primer Apellido">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="cedula">Cédula</label>
+                    <input type="number" class="form-control" id="cedula" placeholder="123456789">
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="celular">Celular</label>
+                    <input type="number" class="form-control" id="celular" placeholder="0971234567">
+                </div>
+            </div>
+            <button type="button" onclick="registrar_usuario()" class="btn btn-primary">Registrar</button>
+    </div>
+
+    <script>
+        function registrar_usuario() {
+
+            let dia = new Date();
+            let mes = dia.getMonth() + 1;
+            let mesTexto = mes.toString();
+            if (mes.length != 2) mes = 0 + mes;
+
+            let fecha = `${dia.getFullYear()}/${mes}/${dia.getDate()}`;
+
+            let datos = {
+                nombre: document.getElementById('nombre').value,
+                apellido: document.getElementById('apellido').value,
+                cedula: document.getElementById('cedula').value,
+                celular: document.getElementById('celular').value,
+                fecha
+            }
+
+            if (datos.nombre.trim() == "" || datos.apellido.trim() == "" || datos.cedula.trim() == "" || datos.celular.trim() == "") {
+                alert('Debe llenar todos los campos');
+            } else if (datos.celular.length < 10 || datos.celular.length > 10) {
+                alert('El celular debe contener 10 dígitos');
+            } else {
+                fetch('http://localhost:5000/usuarios/validar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(datos)
+                })
+                .then(res => res.json())
+                .catch(error => console.log('Error: ', error))
+                .then(respuesta => {
+                    if (respuesta.existe) {
+                        alert('El usuario insertado ya existe')
+                    } else {
+                        fetch('http://localhost:5000/usuarios/registrar', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(datos)
+                        })
+                        .then(res => res.json())
+                        .catch(error => console.log('Error: ',error))
+                        .then(respuesta => {
+                            if (respuesta.registro) {
+                                alert(respuesta.mensaje)
+                            }
+                        });
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

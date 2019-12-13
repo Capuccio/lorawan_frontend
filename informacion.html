@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>PRUEBAAA</title>
+    <!--CSS-->
+    <link rel="stylesheet" href="./css/informacion.css">
+</head>
+<body>
+
+    <div class="Cancelar">
+        <a href="index.html"><img src="./img/left-arrow.png" class="Flecha__Cancelar" alt="Flecha Salir"></a>
+        <a href="index.html" class="Cancelar__Texto__Link"><div class="Cancelar__Texto">Volver</div></a>
+    </div>
+
+    <div class="Cuadro__Informacion">
+            <div class="Id__Dispositivo__Titulo">
+                ID del Sensor
+            </div>
+        <div class="Id__Dispositivo" id="id_dispositivo"></div>
+
+        <div class="Cuadros__Primero">
+            <div class="Cuadro__Temperatura">
+                <div class="Temperatura__Titulo">Temperatura</div>
+                <div class="Temperatura__Informacion" id="temperatura_dis"></div>
+            </div>
+            <div class="Cuadro__Humedad">
+                <div class="Humedad__Titulo">Humedad</div>
+                <div class="Humedad__Informacion" id="humedad_dis"></div>
+            </div>
+        </div>
+        <div class="Cuadros__Segundo">
+            <div class="Cuadro__Lluvia">
+                <div class="Lluvia__Titulo">Lluvia</div>
+                <div class="Lluvia__Informacion" id="lluvia_dis"></div>
+            </div>
+            <div class="Cuadro__Humedad__Suelo">
+                <div class="Humedad__Suelo__Titulo">Humedad del Suelo</div>
+                <div class="Humedad__Suelo__Informacion" id="humedad_suelo_dis"></div>
+            </div>
+        </div>
+        <div class="Cuadros__Tercero">
+            <div class="Cuadro__Monoxido__Carbon">
+                <div class="Monoxido__Carob__Titulo">Monóxido de Carbón</div>
+                <div class="Monoxido__Carbon__Informacion" id="monoxido_carbon_dis"></div>
+            </div>
+            <div class="Cuadro__Pulso__Emergencia">
+                <div class="Pulso__Emergencia__Titulo">Pulso de Emergencia</div>
+                <div class="Pulso__Emergencia__Informacion" id="pulso_emergencia_dis"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.load = obtenerDatos('dispositivo');
+
+        function obtenerDatos(dispositivo) {
+            let regex = new RegExp("[\\?&]" + dispositivo + "=([^&#]*)"),
+            resultado = regex.exec(location.search);
+
+            let id = resultado[1];
+
+            fetch(`http://localhost:5000/dispositivo/informacion/${id}`)
+            .then(res => res.json())
+            .catch(error => console.log(error))
+            .then(respuesta => {
+                if (respuesta.error) {
+                    alert(respuesta.mensaje)
+                } else {
+                    console.log(respuesta)
+                    document.getElementById('id_dispositivo').innerHTML = respuesta.mensaje[0];
+                    document.getElementById('temperatura_dis').innerHTML = respuesta.mensaje[1];
+                    document.getElementById('humedad_dis').innerHTML = respuesta.mensaje[2];
+                    document.getElementById('lluvia_dis').innerHTML = respuesta.mensaje[3];
+                    document.getElementById('humedad_suelo_dis').innerHTML = respuesta.mensaje[4];
+                    document.getElementById('monoxido_carbon_dis').innerHTML = respuesta.mensaje[5];
+                    document.getElementById('pulso_emergencia_dis').innerHTML = respuesta.mensaje[6];
+                }
+            });
+        }
+    </script>
+</body>
+</html>
